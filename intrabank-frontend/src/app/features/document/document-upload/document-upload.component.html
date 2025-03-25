@@ -1,0 +1,218 @@
+  <div class="w-full  bg-white rounded-xl shadow-xl overflow-hidden flex flex-col max-h-screen">
+    <!-- Header Section -->
+    <div class="px-6 py-4 border-b border-gray-100 flex-shrink-0">
+      <h2 class="text-2xl font-bold text-gray-900">Upload Document</h2>
+      <p class="mt-1 text-sm text-gray-600">Complete the form below to upload your document</p>
+    </div>
+
+    <!-- Main Form Section -->
+    <div class="px-6 py-4 overflow-y-auto flex-grow">
+      <form [formGroup]="documentForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Title Input -->
+        <div class="space-y-1">
+          <label for="titre" class="block text-sm font-medium text-gray-700">Document Title</label>
+          <input 
+            type="text" 
+            id="titre" 
+            formControlName="titre" 
+            class="block w-full rounded-lg border-2 border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-150 py-2 px-3"
+            placeholder="Enter document title">
+          <p *ngIf="documentForm.get('titre')?.touched && documentForm.get('titre')?.errors?.['required']" 
+             class="mt-1 text-xs text-red-600">Title is required</p>
+        </div>
+
+        <!-- Top row grid: Document Type, Category, and Author -->
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <!-- Document Type Select -->
+          <div class="space-y-1">
+            <label for="type" class="block text-sm font-medium text-gray-700">Document Type</label>
+            <div class="relative">
+              <select 
+                id="type" 
+                formControlName="type" 
+                class="block w-full rounded-lg border-2 border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 appearance-none pr-10 py-2 px-3 transition duration-150">
+                <option [value]="DocumentType.PDF">PDF Document</option>
+                <option [value]="DocumentType.DOC">Word Document (.doc)</option>
+                <option [value]="DocumentType.DOCX">Word Document (.docx)</option>
+                <option [value]="DocumentType.XLS">Excel Spreadsheet (.xls)</option>
+                <option [value]="DocumentType.XLSX">Excel Spreadsheet (.xlsx)</option>
+                <option [value]="DocumentType.TXT">Text Document</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="space-y-1">
+            <label for="categoryId" class="block text-sm font-medium text-gray-700">Category</label>
+            <div class="relative">
+              <select 
+                id="categoryId" 
+                formControlName="categoryId" 
+                class="block w-full rounded-lg border-2 border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 appearance-none pr-10 py-2 px-3 transition duration-150"
+                [class.cursor-not-allowed]="loading$ | async"
+                [attr.disabled]="(loading$ | async) ? '' : null">
+                <option value="" disabled selected>Select a category</option>
+                <option *ngFor="let category of categories$ | async" [value]="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                <svg *ngIf="!(loading$ | async)" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                <svg *ngIf="loading$ | async" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            </div>
+            <p *ngIf="documentForm.get('categoryId')?.touched && documentForm.get('categoryId')?.errors?.['required']" 
+               class="mt-1 text-xs text-red-600">Please select a category</p>
+          </div>
+
+          <!-- Author -->
+          <div class="space-y-1">
+            <label for="auteurId" class="block text-sm font-medium text-gray-700">Author</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="auteurId" 
+                formControlName="auteurId" 
+                [value]="currentUser ? (currentUser.firstName + ' ' + currentUser.lastName) : ''"
+                readonly
+                class="block w-full rounded-lg border-2 border-gray-100 bg-gray-50 shadow-sm py-2 px-3 cursor-not-allowed text-sm">
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">{{ currentUser?.department || 'Current user' }}</p>
+          </div>
+        </div>
+
+        <!-- Comment Section -->
+        <div class="space-y-1">
+          <label for="commentaire" class="block text-sm font-medium text-gray-700">Comments</label>
+          <textarea 
+            id="commentaire" 
+            formControlName="commentaire" 
+            rows="2"
+            class="block w-full rounded-lg border-2 border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-150 resize-none py-2 px-3 text-sm"
+            placeholder="Add your comments here"></textarea>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700">Document Files</label>
+          
+          <!-- Add New File Button -->
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm text-gray-500">Total files: {{ selectedFiles.length }}</span>
+            <button 
+              type="button"
+              (click)="addNewFileInput()"
+              class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Another File
+            </button>
+          </div>
+
+          <!-- File Inputs List -->
+          <div class="space-y-4">
+            <div *ngFor="let input of fileInputs; let i = index" 
+                 class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-700">File {{ i + 1 }}</h3>
+                <button 
+                  type="button"
+                  (click)="removeFileInput(i)"
+                  class="text-gray-400 hover:text-gray-500">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div class="flex justify-center px-4 py-3 border-2 border-dashed border-gray-300 bg-white rounded-lg hover:border-blue-400 transition-colors duration-200">
+                <div class="space-y-1 text-center">
+                  <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <div class="flex text-sm text-gray-600 justify-center">
+                    <label [for]="input.id" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                      <span>Select file</span>
+                      <input 
+                        [id]="input.id"
+                        type="file" 
+                        class="sr-only" 
+                        (change)="onFileSelected($event, i)"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    </label>
+                    <p class="pl-1">or drag and drop</p>
+                  </div>
+                  <p class="text-xs text-gray-500">PDF, DOC, DOCX, XLS, or XLSX up to 10MB</p>
+                </div>
+              </div>
+              <!-- Show selected file name if exists -->
+              <div *ngIf="selectedFiles[i]" class="mt-2 flex items-center justify-between p-2 bg-white rounded border border-gray-200">
+                <div class="flex items-center space-x-2">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span class="text-sm text-gray-700">{{ selectedFiles[i].name }}</span>
+                </div>
+                <button type="button" 
+                        (click)="removeFile(i)"
+                        class="text-red-500 hover:text-red-700 focus:outline-none">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div *ngIf="error$ | async as errorMsg" 
+             class="rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700 flex items-center"
+             [@fadeInOut]>
+          <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          {{ errorMsg }}
+        </div>
+
+        <div *ngIf="success$ | async" 
+             class="rounded-lg bg-green-50 border border-green-200 p-3 text-xs text-green-700 flex items-center"
+             [@fadeInOut]>
+          <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          Document uploaded successfully!
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer with Submit Button -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+      <button 
+        type="submit" 
+        [disabled]="!documentForm.valid || selectedFiles.length === 0 || (uploading$ | async)"
+        (click)="onSubmit()"
+        class="w-full flex justify-center py-3 px-4 border border-blue-600 rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed transition-colors duration-200">
+        <svg *ngIf="uploading$ | async" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        {{ (uploading$ | async) ? 'Uploading...' : 'Upload Documents' }}
+      </button>
+    </div>
+  </div>

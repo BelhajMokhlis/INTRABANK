@@ -1,0 +1,172 @@
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <div class="bg-white rounded-lg shadow-lg p-6">
+    <div class="mb-6">
+      <h2 class="text-3xl font-bold text-gray-900">Create New Version</h2>
+      <div *ngIf="documentTitle$ | async as title" class="mt-2 text-lg text-gray-600">
+        Document: {{ title }}
+      </div>
+      <div *ngIf="nextVersionNumber$ | async as version" class="mt-1 text-sm text-gray-500">
+        Version: {{ version }}
+      </div>
+    </div>
+    
+    <form [formGroup]="versionForm" (ngSubmit)="onSubmit()" class="space-y-6">
+     
+
+      <div class="space-y-2">
+        <label for="numeroVersion" class="block text-sm font-medium text-gray-700">Version Number</label>
+        <input 
+          type="number" 
+          class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors duration-200" 
+          id="numeroVersion" 
+          formControlName="numeroVersion"
+          [attr.aria-invalid]="versionForm.get('numeroVersion')?.invalid && versionForm.get('numeroVersion')?.touched"
+          aria-describedby="version-error"
+          readonly>
+        <div *ngIf="versionForm.get('numeroVersion')?.invalid && versionForm.get('numeroVersion')?.touched" 
+             id="version-error" 
+             class="text-sm text-red-600 mt-1">
+          Version number is required and must be positive
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="commentaire" class="block text-sm font-medium text-gray-700">Comment</label>
+        <textarea 
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors duration-200" 
+          id="commentaire" 
+          formControlName="commentaire"
+          rows="4"
+          placeholder="Enter version comment"></textarea>
+      </div>
+
+      <div class="space-y-2">
+        <label for="files" class="block text-sm font-medium text-gray-700">Files</label>
+        
+        <!-- Add New File Button -->
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm text-gray-500">Total files: {{ selectedFiles.length }}</span>
+          <button 
+            type="button"
+            (click)="addNewFileInput()"
+            class="inline-flex items-center px-3 py-1.5 border border-indigo-600 text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Another File
+          </button>
+        </div>
+
+        <!-- File Inputs List -->
+        <div class="space-y-4">
+          <div *ngFor="let input of fileInputs; let i = index" 
+               class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-medium text-gray-700">File {{ i + 1 }}</h3>
+              <button 
+                type="button"
+                (click)="removeFileInput(i)"
+                class="text-gray-400 hover:text-gray-500">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="flex justify-center px-4 py-3 border-2 border-dashed border-gray-300 bg-white rounded-lg hover:border-indigo-400 transition-colors duration-200">
+              <div class="space-y-1 text-center">
+                <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-gray-600 justify-center">
+                  <label [for]="input.id" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                    <span>Select file</span>
+                    <input 
+                      [id]="input.id"
+                      type="file" 
+                      class="sr-only" 
+                      (change)="onFileSelected($event, i)"
+                      accept=".pdf,.doc,.docx">
+                  </label>
+                  <p class="pl-1">or drag and drop</p>
+                </div>
+                <p class="text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>
+                <p *ngIf="input.file" class="text-sm text-gray-600 mt-2">
+                  Selected: {{ input.file.name }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2" *ngIf="selectedFiles.length > 0">
+        <h4 class="text-lg font-medium text-gray-900">Selected Files</h4>
+        <ul class="divide-y divide-gray-200 border rounded-lg bg-gray-50">
+          <li class="flex justify-between items-center p-3 hover:bg-white transition-colors duration-200" *ngFor="let file of selectedFiles">
+            <div class="flex items-center space-x-3">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="text-sm text-gray-700">{{ file.name }}</span>
+            </div>
+            <button type="button" 
+                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                    (click)="removeFile(file)">
+              <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Remove
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rounded-md bg-red-50 p-4" *ngIf="error$ | async as error">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Error</h3>
+            <div class="mt-2 text-sm text-red-700">{{ error }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-md bg-green-50 p-4" *ngIf="success$ | async">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-green-800">Success</h3>
+            <div class="mt-2 text-sm text-green-700">Version created successfully!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button 
+          type="submit" 
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          [disabled]="!versionForm.valid || (loading$ | async)">
+          <svg *ngIf="loading$ | async" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ (loading$ | async) ? 'Creating...' : 'Create Version' }}
+        </button>
+        <button 
+          type="button" 
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+          (click)="onCancel()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

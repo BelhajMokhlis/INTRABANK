@@ -1,0 +1,8 @@
+    export enum Role {
+      EMPLOYEE="EMPLOYEE",
+      MANAGER="MANAGER",
+      ADMINISTRATOR="ADMINISTRATOR",
+      COMPLIANCE_OFFICER="COMPLIANCE_OFFICER"
+    }
+  
+  

@@ -1,0 +1,322 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Document Management</h1>
+        <p class="mt-2 text-sm text-gray-600">View, search, and manage your documents</p>
+      </div>
+      <div class="mt-4 md:mt-0">
+        <a routerLink="/documents/upload" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all duration-200 hover:scale-105">
+          <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Upload New Document
+        </a>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="bg-white/70 backdrop-blur-sm shadow-xl rounded-xl p-6 mb-8 border border-gray-100">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Search Input -->
+        <div class="relative">
+          <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+          <div class="relative rounded-lg shadow-sm">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="text" id="search" [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" (blur)="onSearch()" 
+              class="pl-10 block w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white" 
+              placeholder="Search documents...">
+          </div>
+        </div>
+
+        <!-- Document Type Filter -->
+        <div>
+          <label for="docType" class="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
+          <select id="docType" [(ngModel)]="selectedType" (change)="onFilterChange()" 
+            class="block w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white">
+            <option value="ALL">All Types</option>
+            <option *ngFor="let type of documentTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <label for="docStatus" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select id="docStatus" [(ngModel)]="selectedStatus" (change)="onFilterChange()" 
+            class="block w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white">
+            <option value="ALL">All Statuses</option>
+            <option *ngFor="let status of documentStatuses" [value]="status">{{ getStatusLabel(status) }}</option>
+          </select>
+        </div>
+
+        <!-- Reset Filters -->
+        <div class="flex items-end">
+          <button (click)="searchTerm = ''; selectedType = 'ALL'; selectedStatus = 'ALL'; onFilterChange()" 
+            class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 border border-gray-200 hover:border-gray-300 shadow-sm">
+            <svg class="mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reset Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents List -->
+    <div class="bg-white/70 backdrop-blur-sm shadow-xl rounded-xl border border-gray-100 overflow-hidden">
+      <!-- Status Messages -->
+      <div *ngIf="loading$ | async" class="p-4 flex justify-center">
+        <div class="flex items-center">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-sm text-gray-600">Loading documents...</span>
+        </div>
+      </div>
+
+      <div *ngIf="error$ | async as errorMsg" class="p-4 border-l-4 border-red-500 bg-red-50 text-red-700 text-sm">
+        <div class="flex">
+          <svg class="h-5 w-5 text-red-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+          <span>{{ errorMsg }}</span>
+        </div>
+      </div>
+
+      <ng-container *ngIf="documents$ | async as documents">
+        <div *ngIf="getFilteredDocuments(documents).length === 0 && !(loading$ | async)" class="p-8 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No documents found</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            No documents match your current search filters.
+          </p>
+          <div class="mt-6">
+            <button (click)="searchTerm = ''; selectedType = 'ALL'; selectedStatus = 'ALL'; onFilterChange()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="getFilteredDocuments(documents).length > 0">
+          <!-- Desktop Table View -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                  <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let doc of getFilteredDocuments(documents); trackBy: trackById" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-blue-600 hover:underline cursor-pointer" [routerLink]="['/documents', doc.id]">
+                      {{ doc.titre }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <span class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </span>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">{{ doc.type }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ doc.categoryName }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getStatusClass(doc.status)">
+                      {{ getStatusLabel(doc.status) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ doc.versions && doc.versions.length > 0 ? (doc.versions[doc.versions.length - 1].dateMiseAJour | date:'medium') : 'N/A' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ doc.auteurNom }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end space-x-2">
+                      <button [routerLink]="['/documents', doc.id]" class="text-blue-600 hover:text-blue-900" title="View details">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button [routerLink]="['/documents/edit', doc.id]" class="text-indigo-600 hover:text-indigo-900" title="Edit document">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button (click)="deleteDocument(doc.id, $event)" class="text-red-600 hover:text-red-900" title="Delete document">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tablet and Mobile Card View -->
+          <div class="lg:hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+              <div *ngFor="let doc of getFilteredDocuments(documents); trackBy: trackById" class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+                <div class="p-4 border-b border-gray-200">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="text-sm font-medium text-blue-600 hover:underline cursor-pointer" [routerLink]="['/documents', doc.id]">
+                        {{ doc.titre }}
+                      </div>
+                    
+                    </div>
+                    <div class="flex space-x-2">
+                      <button [routerLink]="['/documents', doc.id]" class="text-blue-600 hover:text-blue-900" title="View details">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button [routerLink]="['/documents/edit', doc.id]" class="text-indigo-600 hover:text-indigo-900" title="Edit document">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button (click)="deleteDocument(doc.id, $event)" class="text-red-600 hover:text-red-900" title="Delete document">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <div class="text-xs font-medium text-gray-500">Type</div>
+                      <div class="flex items-center mt-1">
+                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
+                          <svg class="h-3 w-3 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </span>
+                        <div class="ml-2">
+                          <div class="text-sm text-gray-900">{{ doc.type }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="text-xs font-medium text-gray-500">Category</div>
+                      <div class="text-sm text-gray-900 mt-1">{{ doc.categoryName }}</div>
+                    </div>
+                    <div>
+                      <div class="text-xs font-medium text-gray-500">Status</div>
+                      <span class="mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getStatusClass(doc.status)">
+                        {{ getStatusLabel(doc.status) }}
+                      </span>
+                    </div>
+                    <div>
+                      <div class="text-xs font-medium text-gray-500">Author</div>
+                      <div class="text-sm text-gray-900 mt-1">{{ doc.auteurNom }}</div>
+                    </div>
+                  </div>
+                  <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="text-xs font-medium text-gray-500">Last Updated</div>
+                    <div class="text-sm text-gray-900 mt-1">
+                      {{ doc.versions && doc.versions.length > 0 ? (doc.versions[doc.versions.length - 1].dateMiseAJour | date:'medium') : 'N/A' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="totalElements > 0" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div class="flex-1 flex justify-between sm:hidden">
+            <button (click)="prevPage()" [disabled]="currentPage === 0" [class.opacity-50]="currentPage === 0" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Previous
+            </button>
+            <button (click)="nextPage()" [disabled]="currentPage === totalPages - 1" [class.opacity-50]="currentPage === totalPages - 1" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Next
+            </button>
+          </div>
+          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700">
+                Showing
+                <span class="font-medium">{{ (currentPage * pageSize) + 1 }}</span>
+                to
+                <span class="font-medium">{{ Math.min((currentPage + 1) * pageSize, totalElements) }}</span>
+                of
+                <span class="font-medium">{{ totalElements }}</span>
+                results
+              </p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <!-- Page Size Selector -->
+              <div class="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
+                <label for="pageSize" class="text-sm font-medium text-gray-600">Show</label>
+                <select 
+                  id="pageSize" 
+                  [(ngModel)]="pageSize" 
+                  (change)="onPageSizeChange()" 
+                  class="block w-20 pl-3 pr-8 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white hover:border-gray-400 transition-all duration-200 cursor-pointer appearance-none">
+                  <option [ngValue]="5">5</option>
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="25">25</option>
+                  <option [ngValue]="50">50</option>
+                  <option [ngValue]="100">100</option>
+                </select>
+                <span class="text-sm text-gray-600 whitespace-nowrap">per page</span>
+              </div>
+              <!-- Pagination Controls -->
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button (click)="prevPage()" [disabled]="currentPage === 0" [class.opacity-50]="currentPage === 0" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                  <span class="sr-only">Previous</span>
+                  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <!-- Current Page Number -->
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium">
+                  Page {{ currentPage + 1 }} of {{ totalPages }}
+                </span>
+                <button (click)="nextPage()" [disabled]="currentPage === totalPages - 1" [class.opacity-50]="currentPage === totalPages - 1" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                  <span class="sr-only">Next</span>
+                  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
