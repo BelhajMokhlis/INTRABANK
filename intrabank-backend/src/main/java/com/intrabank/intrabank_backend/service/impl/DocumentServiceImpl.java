@@ -9,9 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+
 import com.intrabank.intrabank_backend.dto.request.DocumentRequest;
 import com.intrabank.intrabank_backend.dto.request.DocumentUpdateRequest;
 import com.intrabank.intrabank_backend.dto.request.VersionDocumentRequest;
@@ -46,8 +46,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
